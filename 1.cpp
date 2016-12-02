@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <set>
 
 using namespace std;
 
@@ -18,7 +19,10 @@ int walk(istream &&is)
 		DirectionCount
 	};
 
-	std::pair<int, int> coords{0, 0};
+	pair<int, int> coords{0, 0};
+	set<decltype(coords)> visited;
+	visited.insert(coords);
+
 	auto direction = North;
 
 	auto turn_right = [](Direction d)
@@ -66,17 +70,23 @@ int walk(istream &&is)
 			break;
 		}
 
-		coords = move(coords, direction, steps);;
+		for (; steps; --steps)
+		{
+			coords = move(coords, direction, 1);
+			if (visited.find(coords) != visited.end())
+			{
+				return abs(coords.first) + abs(coords.second);
+			}
+			visited.insert(coords);
+		}
 	}
 
-	return abs(coords.first) + abs(coords.second);
+	return -1;
 }
 
 int main()
 {
-	assert(5 == walk(istringstream("R2, L3")));
-	assert(2 == walk(istringstream("R2, R2, R2")));
-	assert(12 == walk(istringstream("R5, L5, R5, R3")));
+	assert(4 == walk(istringstream("R8, R4, R4, R8")));
 
 	cout << walk(ifstream("1.txt"));
 	return 0;
