@@ -3,7 +3,6 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
-#include <regex>
 
 using namespace std;
 
@@ -88,6 +87,25 @@ string Decrypt(const string &room)
 	return name;
 }
 
+int Solve2(istream &&is)
+{
+	int res{0};
+
+	string room;
+	while (getline(is, room))
+	{
+		res = CheckIsReal(room);
+		if (!res)
+			continue;
+
+		room = Decrypt(room);
+		if (room.find("north") != room.npos)
+			return res;
+	}
+
+	return 0;
+}
+
 int main()
 {
 	assert(123 == CheckIsReal("aaaaa-bbb-z-y-x-123[abxyz]"));
@@ -98,6 +116,8 @@ int main()
 	cout << Solve(ifstream("4.txt")) << endl;
 
 	assert("very encrypted name" == Decrypt("qzmt-zixmtkozy-ivhz-343"));
+
+	cout << Solve2(ifstream("4.txt")) << endl;
 
 	return 0;
 }
