@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <cstring>
 
 using namespace std;
 
@@ -40,6 +41,51 @@ string Decompress(const std::string &s)
 	return ret;
 }
 
+size_t Count(const char *s, const char *send);
+
+pair<size_t, const char *> CountPattern(const char *s)
+{
+	int span{0}, count{0};
+	int fields = sscanf(s, "(%dx%d)", &span, &count);
+	assert(fields == 2);
+
+	char *rbr = strchr(s, ')');
+	assert(rbr);
+	++rbr;
+
+	const char *send = rbr + span;
+
+	return { size_t(count) * Count(rbr, send), send };
+}
+
+size_t Count(const char *s, const char *send)
+{
+	size_t count{0};
+
+	while (s != send)
+	{
+		if (*s == '(')
+		{
+			auto res = CountPattern(s);
+			count += res.first;
+			s = res.second;
+		}
+		else
+		{
+			if (!isspace(*s))
+				++count;
+			++s;
+		}
+	}
+
+	return count;
+}
+
+size_t Version2(const string &s)
+{
+	return Count(s.data(), s.data() + s.size());
+}
+
 int main()
 {
 	assert(Decompress("ADVENT") == "ADVENT");
@@ -55,5 +101,13 @@ int main()
 
 	auto d = Decompress(s);
 	cout << count_if(begin(d), end(d), [](char c) { return !isspace(c); }) << endl;
+
+
+	assert(Version2("(3x3)XYZ") == 9);
+	assert(Version2("X(8x2)(3x3)ABCY") == 20);
+	assert(Version2("(27x12)(20x12)(13x14)(7x10)(1x12)A") == 241920);
+	assert(Version2("(25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN") == 445);
+
+	cout << Version2(s) << endl;
 	return 0;
 }
