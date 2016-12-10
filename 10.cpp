@@ -176,7 +176,7 @@ int Solve2(FactoryT &factory)
 {
 	auto nobot = [](int, const BotInstr &) { return false; };
 
-	array<int, 3> outs{ -1, -1, -1 };
+	array<int, 3> outs{ {-1, -1, -1} };
 	int count = 3;
 
 	auto outfilt = [&](int out, int val)
