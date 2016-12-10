@@ -108,7 +108,8 @@ FactoryT Parse(istream &&is)
 	return factory;
 }
 
-int Solve(FactoryT &factory, int target_l, int target_h)
+template <typename BotFilter, typename OutFilter>
+bool Solve(FactoryT &factory, BotFilter bot_action, OutFilter out_filter)
 {
 	bool has_change = true;
 
@@ -125,23 +126,73 @@ int Solve(FactoryT &factory, int target_l, int target_h)
 			{
 				has_change = true;
 				sort(begin(bot.chips), end(bot.chips));
-				if (bot.chips[0] == target_l && bot.chips[1] == target_h)
-					return i;
+				if (bot_action(i, bot))
+					return true;
 
 				const auto &il = bot.instr.low;
 				if (il.where == Dest::BOT)
 					factory[il.number].chips.push_back(bot.chips[0]);
+				else
+					if (out_filter(il.number, bot.chips[0]))
+						return true;
 
 				const auto &ih = bot.instr.high;
 				if (ih.where == Dest::BOT)
 					factory[ih.number].chips.push_back(bot.chips[1]);
+				else
+					if (out_filter(ih.number, bot.chips[1]))
+						return true;
 
 				bot.chips.clear();
 			}
 		}
 	}
 
-	return -1;
+	return false;
+}
+
+int Solve1(FactoryT &factory, int target_l, int target_h)
+{
+	int result{-1};
+
+	auto filt = [&](int bot_number, const BotInstr &bot)
+	{
+		if (bot.chips[0] == target_l && bot.chips[1] == target_h)
+		{
+			result = bot_number;
+			return true;
+		}
+		return false;
+	};
+
+	auto noout = [](int, int) -> bool { return false; };
+	if (!Solve(factory, filt, noout))
+		return -1;
+
+	return result;
+}
+
+int Solve2(FactoryT &factory)
+{
+	auto nobot = [](int, const BotInstr &) { return false; };
+
+	array<int, 3> outs{ -1, -1, -1 };
+	int count = 3;
+
+	auto outfilt = [&](int out, int val)
+	{
+		if (out < 3 && outs[out] == -1)
+		{
+			outs[out] = val;
+			return --count == 0;
+		}
+		return false;
+	};
+
+	if (!Solve(factory, nobot, outfilt))
+		return -1;
+
+	return outs[0] * outs[1] * outs[2];
 }
 
 int main()
@@ -162,9 +213,11 @@ value 2 goes to bot 2)";
 		{ {5,2}, {{Dest::BOT, 1}, {Dest::BOT, 0}} },
 	};
 	assert(Dump(f) == Dump(fref));
-	assert(Solve(f, 2, 5) == 2);
+	assert(Solve1(f, 2, 5) == 2);
 
 	auto factory = Parse(ifstream("10.txt"));
-	cout << Solve(factory, 17, 61) << endl;
+	cout << Solve1(factory, 17, 61) << endl;
+
+	cout << Solve2(factory) << endl;
 	return 0;
 }
