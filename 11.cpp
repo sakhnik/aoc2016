@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 #include <cassert>
 #include <queue>
 #include <algorithm>
@@ -114,7 +115,8 @@ template <int COUNT>
 int Solve(const vector<int> &configuration,
 		  const vector<const char *> &names)
 {
-	unordered_set<unsigned long> space;
+	// map current_state -> previous_state
+	unordered_map<unsigned long, unsigned long> space;
 	queue<pair<int, unsigned long>> to_search;
 
 	State<COUNT> initial_state;
@@ -123,19 +125,33 @@ int Solve(const vector<int> &configuration,
 
 	to_search.emplace(0, initial_state.Hash());
 
-	int reported_distance = 0;
+	auto dump_solution = [&](unsigned long state, int distance)
+	{
+		//vector<unsigned long> s;
+		//s.emplace_back(state);
+
+		//while (true)
+		//{
+		//	auto prev = space[s.back()];
+		//	s.emplace_back(prev);
+		//	if (prev == initial_state.Hash())
+		//		break;
+		//}
+
+		//while (!s.empty())
+		//{
+		//	cout << State<COUNT>{s.back()}.Dump(names) << endl;
+		//	s.pop_back();
+		//}
+
+		return distance;
+	};
+
 	while (!to_search.empty())
 	{
 		int distance = to_search.front().first;
 		State<COUNT> state(to_search.front().second);
 		to_search.pop();
-
-		if (distance > reported_distance)
-		{
-			cout << distance << endl;
-			reported_distance = distance;
-		}
-
 
 		int floor = state.elevator;
 
@@ -161,8 +177,8 @@ int Solve(const vector<int> &configuration,
 					if (new_state.IsConsistent(floor) && new_state.IsConsistent(next_floor))
 					{
 						if (hash == State<COUNT>::TARGET_HASH)
-							return distance + 1;
-						space.insert(hash);
+							return dump_solution(hash, distance + 1);
+						space.insert({hash, state.Hash()});
 						to_search.emplace(distance + 1, hash);
 					}
 				}
@@ -171,9 +187,11 @@ int Solve(const vector<int> &configuration,
 			// Try to move pair of items
 			for (int i = 0; i < COUNT - 1; ++i)
 			{
+				if (state.items[i] != floor)
+					continue;
 				for (int j = i + 1; j < COUNT; ++j)
 				{
-					if (state.items[i] != floor && state.items[j] != floor)
+					if (state.items[j] != floor)
 						continue;
 					if (!state.CanCarryTogether(i, j))
 						continue;
@@ -188,8 +206,8 @@ int Solve(const vector<int> &configuration,
 						if (new_state.IsConsistent(floor) && new_state.IsConsistent(next_floor))
 						{
 							if (hash == State<COUNT>::TARGET_HASH)
-								return distance + 1;
-							space.insert(hash);
+								return dump_solution(hash, distance + 1);
+							space.insert({hash, state.Hash()});
 							to_search.emplace(distance + 1, hash);
 						}
 					}
@@ -210,7 +228,7 @@ int main()
 
 	// 0: hydorgen
 	// 1: lithium
-	cout << Solve<4>({1, 0, 2, 0}, {"HG", "HM", "LG", "LM"}) << endl;
+	assert(11 == Solve<4>({1, 0, 2, 0}, {"HG", "HM", "LG", "LM"}));
 
 	// The first floor contains a thulium generator, a thulium-compatible microchip, a plutonium generator, and a strontium generator.
 	// The second floor contains a plutonium-compatible microchip and a strontium-compatible microchip.
@@ -222,6 +240,11 @@ int main()
 	// 2: strotium
 	// 3: promethium
 	// 4: ruthenium
-	//cout << Solve<10>({0, 0, 0, 1, 0, 1, 2, 2, 2, 2}) << endl;
+	cout << Solve<10>({0, 0, 0, 1, 0, 1, 2, 2, 2, 2}, {}) << endl;
+
+	// <...>
+	// 5: elerium
+	// 6: dilithium
+	cout << Solve<14>({0, 0, 0, 1, 0, 1, 2, 2, 2, 2, 0, 0, 0, 0}, {}) << endl;
 	return 0;
 }
