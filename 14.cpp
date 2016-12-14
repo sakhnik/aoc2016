@@ -7,17 +7,18 @@
 
 using namespace std;
 
-string Md5ToString(const uint8_t *hash)
+void Md5ToString(const uint8_t *hash, string &ret)
 {
-	string ret;
-	for (int i = 0; i != MD5_DIGEST_LENGTH; ++i)
+	if (ret.size() != MD5_DIGEST_LENGTH * 2)
+		ret.resize(MD5_DIGEST_LENGTH * 2);
+
+	char *out = &ret[0];
+	for (int i = 0; i != MD5_DIGEST_LENGTH; ++i, ++hash)
 	{
 		static const char digits[] = "0123456789abcdef";
-		ret.push_back(digits[(*hash >> 4) & 0xf]);
-		ret.push_back(digits[*hash & 0xf]);
-		++hash;
+		*out++ = digits[(*hash >> 4) & 0xf];
+		*out++ = digits[*hash & 0xf];
 	}
-	return ret;
 }
 
 struct Feature
@@ -74,7 +75,7 @@ int Solve(const char *salt, int hash_count)
 		for (int i = 0; i != hash_count; ++i)
 		{
 			MD5(reinterpret_cast<const uint8_t *>(s.data()), s.size(), md5);
-			s = Md5ToString(md5);
+			Md5ToString(md5, s);
 		}
 		hashes.push_back(CalcFeatures(s));
 	};
