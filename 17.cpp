@@ -88,11 +88,70 @@ int Search(int x, int y, int length, string &path, string &min_path)
 	return min_length;
 }
 
+int SearchMax(int x, int y, int length, string &path)
+{
+	if (x == 4 && y == 4)
+		return length;
+
+	// We'll search depth-first preferring down-right direction.
+	// Hope to reach the target sooner.
+	// Then we'll cut off the other branches basing on already known
+	// distance, thus exhausting the search tree.
+
+	// Distance to the target
+	int max_length = 0;
+
+	int doors = GetDoors(path);
+
+	if ((doors & DOWN) && y < 4)
+	{
+		path.push_back('D');
+		auto l = SearchMax(x, y + 1, length + 1, path);
+		path.pop_back();
+		if (l > max_length)
+			max_length = l;
+	}
+
+	if ((doors & RIGHT) && x < 4)
+	{
+		path.push_back('R');
+		auto l = SearchMax(x + 1, y, length + 1, path);
+		path.pop_back();
+		if (l > max_length)
+			max_length = l;
+	}
+
+	if ((doors & UP) && y > 1)
+	{
+		path.push_back('U');
+		auto l = SearchMax(x, y - 1, length + 1, path);
+		path.pop_back();
+		if (l > max_length)
+			max_length = l;
+	}
+
+	if ((doors & LEFT) && x > 1)
+	{
+		path.push_back('L');
+		auto l = SearchMax(x - 1, y, length + 1, path);
+		path.pop_back();
+		if (l > max_length)
+			max_length = l;
+	}
+
+	return max_length;
+}
+
 string Solve(string prefix)
 {
 	string min_path;
 	Search(1, 1, 0, prefix, min_path);
 	return min_path.substr(prefix.size());
+}
+
+int Solve2(string prefix)
+{
+	return SearchMax(1, 1, 0, prefix);
 }
 
 int main()
@@ -106,6 +165,13 @@ int main()
 	assert("DRURDRUDDLLDLUURRDULRLDUUDDDRR" == Solve("ulqzkmiv"));
 
 	cout << Solve("gdjjyniy") << endl;
+
+	assert(370 == Solve2("ihgpwlah"));
+	assert(492 == Solve2("kglvqrro"));
+	assert(830 == Solve2("ulqzkmiv"));
+
+	cout << Solve2("gdjjyniy") << endl;
+
 	return 0;
 }
 
